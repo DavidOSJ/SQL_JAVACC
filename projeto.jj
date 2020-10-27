@@ -1,0 +1,98 @@
+options{ 
+	IGNORE_CASE = true;
+}
+
+PARSER_BEGIN(SQL)
+
+public class SQL{
+	public static void main(String[] args) throws ParseException {
+		try {
+			SQL parser = new SQL(System.in);
+			parser.Start();
+			System.out.print("Compilado com sucesso\n");
+		}
+		catch(ParseException e){
+			System.out.print("Erro de compilacao\n" + e);
+		}
+	}
+}
+PARSER_END(SQL)
+
+SKIP:
+{
+	" "
+|	"\n"
+|	"\t"
+|	"\r"
+}
+
+/*Símbolos*/
+TOKEN:
+{
+	<ALL: "*">
+|	<COMMA: ",">
+|	<SEMICOLON: ";">
+|	<EQUAL: "=">
+|	<POPEN: "(">
+|	<PCLOSE: ")">
+|	<SMALLER: "<">
+|	<BIGGER: ">">
+|	<ASPAS:	"'">
+}
+
+/*Palavras Reservadas*/
+TOKEN:
+{
+	<SELECT: "SELECT">
+|	<FROM: "FROM">
+|	<DISTINCT: "DISTINCT">
+|	<WHERE: "WHERE">
+|	<AND: "AND">
+|	<OR: "OR">
+|	<NOT: "NOT">
+|	<IN: "IN">
+|	<ORDERBY: "ORDER BY">
+|	<ASC: "ASC">
+|	<DESC: "DESC">
+|	<AS: "AS">
+|	<COUNT: "COUNT">
+|	<LIKE: "LIKE">
+}
+
+/*Variáveis*/
+TOKEN:
+{
+	<ID: (["A"-"Z","a"-"z"])+(["A"-"Z","a"-"z","_","0"-"9","%"])*>
+}
+
+/*Parser*/
+void Start():{}
+{
+	<SELECT> (Column() | Count()) (<AS> <ID>)?
+	<FROM>  (<ID> | Variable()) 
+	(<WHERE> (<NOT>)? Value())?
+	(<ORDERBY> Column() (<ASC> | <DESC>))? <SEMICOLON> <EOF>
+}
+
+void Column(): {}
+{
+	<ALL> 
+|	<ID> (<COMMA> (Column())*)?
+|	(<DISTINCT>)? <ID> (<COMMA> (Column())*)?
+}
+
+void Count(): {}
+{
+	<COUNT> <POPEN> ((<DISTINCT> <ID>) | <ALL> | <ID> ) <PCLOSE>
+}
+
+void Variable(): {}
+{
+	<POPEN> <SELECT> Column() <FROM> Variable() <PCLOSE>
+|	(<ASPAS>)? <ID> (<ASPAS>)?
+}
+
+void Value():{}
+{
+	<ID> (<EQUAL> Variable())? ((<AND> | <OR>) Variable())? (<LIKE> Variable())?
+}
